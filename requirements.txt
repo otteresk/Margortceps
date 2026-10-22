@@ -1,0 +1,14 @@
+Write a python program that does the reverse process of a spectrogram: convert an image to a mono sound.
+Take lossless png as input and treat the background color as silence.
+Scan the image from left to right.
+Every pixel in a row creates a sound of a frequency that is determined by the y coordinate of the pixel and a duration that is fixed by simply the total duration divided by the width of the image.
+The tone that every pixel generates is a sinus curve.
+Two or more pixels in a horizontal line should create a continuous sound, i.e. you have to take the phase of the sinus curve into account.
+The sounds of all pixels in one row should be simply added.
+
+input parameters are:
+a) the minimum frequency (for pixels at the bottom line of the image)
+b) the maximum frequency (for pixels at the top line of the image)
+c) total duration of the sound
+
+Choose an appropiate format for the output sound.
