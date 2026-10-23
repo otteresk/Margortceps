@@ -80,18 +80,34 @@ def image_to_samples(
             if frame_start == frame_end:
                 continue
 
+            ramp_frames = max(1.0, total_frames / (width * 5))
+            half_ramp = ramp_frames / 2
+            render_start = max(0, math.floor(frame_start - half_ramp))
+            render_end = min(total_frames, math.ceil(frame_end + half_ramp))
             phase_step = 2 * math.pi * frequency / sample_rate
-            frame = frame_start
-            while frame < frame_end:
-                block_end = min(frame + 4096, frame_end)
-                phase = phase_step * frame
+            frame = render_start
+            while frame < render_end:
+                block_end = min(frame + 4096, render_end)
+                phase = phase_step * (frame - frame_start)
                 sine = math.sin(phase)
                 cosine = math.cos(phase)
                 step_sine = math.sin(phase_step)
                 step_cosine = math.cos(phase_step)
 
                 while frame < block_end:
-                    samples[frame] += sine
+                    fade_in_progress = min(
+                        1.0,
+                        max(0.0, (frame - (frame_start - half_ramp)) / ramp_frames),
+                    )
+                    fade_out_progress = min(
+                        1.0,
+                        max(0.0, ((frame_end + half_ramp) - frame) / ramp_frames),
+                    )
+                    envelope = min(
+                        0.5 - 0.5 * math.cos(math.pi * fade_in_progress),
+                        0.5 - 0.5 * math.cos(math.pi * fade_out_progress),
+                    )
+                    samples[frame] += envelope * sine
                     sine, cosine = (
                         sine * step_cosine + cosine * step_sine,
                         cosine * step_cosine - sine * step_sine,
