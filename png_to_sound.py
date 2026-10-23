@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import math
 import struct
+import sys
 import wave
 from collections import Counter
 from pathlib import Path
@@ -50,6 +51,8 @@ def image_to_samples(
 
     background = Counter(pixels).most_common(1)[0][0]
     samples = [0.0] * total_frames
+    show_progress = sys.stderr.isatty()
+    last_progress = -1
 
     for y in range(height):
         if height == 1:
@@ -113,6 +116,20 @@ def image_to_samples(
                         cosine * step_cosine - sine * step_sine,
                     )
                     frame += 1
+
+        if show_progress:
+            progress = (y + 1) * 100 // height
+            if progress != last_progress:
+                bar_width = 30
+                filled = bar_width * (y + 1) // height
+                bar = "#" * filled + "-" * (bar_width - filled)
+                print(
+                    f"\rSynthesizing: [{bar}] {progress:3d}% ({y + 1}/{height} rows)",
+                    end="\n" if y + 1 == height else "",
+                    file=sys.stderr,
+                    flush=True,
+                )
+                last_progress = progress
 
     peak = max((abs(sample) for sample in samples), default=0.0)
     if peak == 0:
