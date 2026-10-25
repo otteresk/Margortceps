@@ -20,8 +20,11 @@ def image_to_samples(
     maximum_frequency: float,
     duration: float,
     sample_rate: int,
+    amplitude_mode: str = "global",
 ) -> list[int]:
     """Synthesize a mono, 16-bit PCM signal from the non-background pixels."""
+    if amplitude_mode not in {"global", "row"}:
+        raise ValueError("amplitude mode must be 'global' or 'row'")
     if not math.isfinite(minimum_frequency) or minimum_frequency <= 0:
         raise ValueError("minimum frequency must be a finite positive number")
     if not math.isfinite(maximum_frequency) or maximum_frequency <= 0:
@@ -55,6 +58,7 @@ def image_to_samples(
     last_progress = -1
 
     for y in range(height):
+        row_samples = [0.0] * total_frames if amplitude_mode == "row" else samples
         if height == 1:
             frequency = (minimum_frequency + maximum_frequency) / 2
         else:
@@ -110,12 +114,19 @@ def image_to_samples(
                         0.5 - 0.5 * math.cos(math.pi * fade_in_progress),
                         0.5 - 0.5 * math.cos(math.pi * fade_out_progress),
                     )
-                    samples[frame] += envelope * sine
+                    row_samples[frame] += envelope * sine
                     sine, cosine = (
                         sine * step_cosine + cosine * step_sine,
                         cosine * step_cosine - sine * step_sine,
                     )
                     frame += 1
+
+        if amplitude_mode == "row":
+            row_peak = max((abs(sample) for sample in row_samples), default=0.0)
+            if row_peak > 0:
+                row_scale = 1 / row_peak
+                for frame, sample in enumerate(row_samples):
+                    samples[frame] += sample * row_scale
 
         if show_progress:
             progress = (y + 1) * 100 // height
@@ -162,6 +173,15 @@ def main() -> int:
         default=44100,
         help="output sample rate in Hz (default: 44100)",
     )
+    parser.add_argument(
+        "--amplitude-mode",
+        choices=("global", "row"),
+        default="global",
+        help=(
+            "global: normalize the combined signal (default); "
+            "row: normalize each active row before combining"
+        ),
+    )
     arguments = parser.parse_args()
 
     try:
@@ -171,6 +191,7 @@ def main() -> int:
             arguments.maximum_frequency,
             arguments.duration,
             arguments.sample_rate,
+            arguments.amplitude_mode,
         )
         write_wav(arguments.output_wav, samples, arguments.sample_rate)
     except (OSError, UnidentifiedImageError, ValueError) as error:
