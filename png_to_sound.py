@@ -13,6 +13,8 @@ from pathlib import Path
 
 from PIL import Image, UnidentifiedImageError
 
+MIN_RAMP_DURATION_SECONDS = 0.010
+
 
 def image_to_samples(
     image_path: Path,
@@ -56,6 +58,21 @@ def image_to_samples(
     samples = [0.0] * total_frames
     show_progress = sys.stderr.isatty()
     last_progress = -1
+    pixel_ramp_frames = total_frames / (width * 5)
+    minimum_ramp_frames = sample_rate * MIN_RAMP_DURATION_SECONDS
+    if minimum_ramp_frames > pixel_ramp_frames and any(
+        pixels[y * width + x] != background
+        and pixels[y * width + x][3] != 0
+        and (x + 1) * total_frames // width > x * total_frames // width
+        for y in range(height)
+        for x in range(width)
+    ):
+        print(
+            f"Warning: the {MIN_RAMP_DURATION_SECONDS * 1000:g} ms minimum fade "
+            "is longer than one-fifth "
+            "of a pixel's duration.",
+            file=sys.stderr,
+        )
 
     for y in range(height):
         if height == 1:
@@ -86,7 +103,11 @@ def image_to_samples(
             if frame_start == frame_end:
                 continue
 
-            ramp_frames = max(1.0, total_frames / (width * 5))
+            ramp_frames = max(
+                1.0,
+                minimum_ramp_frames,
+                pixel_ramp_frames,
+            )
             half_ramp = ramp_frames / 2
             render_start = max(0, math.floor(frame_start - half_ramp))
             render_end = min(total_frames, math.ceil(frame_end + half_ramp))
