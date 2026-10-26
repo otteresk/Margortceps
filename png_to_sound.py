@@ -22,9 +22,9 @@ def image_to_samples(
     sample_rate: int,
     amplitude_mode: str = "global",
 ) -> list[int]:
-    """Synthesize a mono, 16-bit PCM signal from the non-background pixels."""
-    if amplitude_mode not in {"global", "row"}:
-        raise ValueError("amplitude mode must be 'global' or 'row'")
+    """Synthesize mono audio; column mode normalizes the summed signal at each x."""
+    if amplitude_mode not in {"global", "column"}:
+        raise ValueError("amplitude mode must be 'global' or 'column'")
     if not math.isfinite(minimum_frequency) or minimum_frequency <= 0:
         raise ValueError("minimum frequency must be a finite positive number")
     if not math.isfinite(maximum_frequency) or maximum_frequency <= 0:
@@ -58,7 +58,6 @@ def image_to_samples(
     last_progress = -1
 
     for y in range(height):
-        row_samples = [0.0] * total_frames if amplitude_mode == "row" else samples
         if height == 1:
             frequency = (minimum_frequency + maximum_frequency) / 2
         else:
@@ -114,19 +113,12 @@ def image_to_samples(
                         0.5 - 0.5 * math.cos(math.pi * fade_in_progress),
                         0.5 - 0.5 * math.cos(math.pi * fade_out_progress),
                     )
-                    row_samples[frame] += envelope * sine
+                    samples[frame] += envelope * sine
                     sine, cosine = (
                         sine * step_cosine + cosine * step_sine,
                         cosine * step_cosine - sine * step_sine,
                     )
                     frame += 1
-
-        if amplitude_mode == "row":
-            row_peak = max((abs(sample) for sample in row_samples), default=0.0)
-            if row_peak > 0:
-                row_scale = 1 / row_peak
-                for frame, sample in enumerate(row_samples):
-                    samples[frame] += sample * row_scale
 
         if show_progress:
             progress = (y + 1) * 100 // height
@@ -142,12 +134,37 @@ def image_to_samples(
                 )
                 last_progress = progress
 
-    peak = max((abs(sample) for sample in samples), default=0.0)
-    if peak == 0:
-        return [0] * total_frames
+    if amplitude_mode == "global":
+        peak = max((abs(sample) for sample in samples), default=0.0)
+        if peak == 0:
+            return [0] * total_frames
+        scale = 32767 / peak
+    else:
+        for x in range(width):
+            frame_start = x * total_frames // width
+            frame_end = (x + 1) * total_frames // width
+            if frame_start == frame_end:
+                continue
 
-    scale = 32767 / peak
-    return [max(-32768, min(32767, round(sample * scale))) for sample in samples]
+            has_pixels = any(
+                pixels[y * width + x] != background and pixels[y * width + x][3] != 0
+                for y in range(height)
+            )
+            if not has_pixels:
+                continue
+
+            peak = max(abs(sample) for sample in samples[frame_start:frame_end])
+            if peak > 0:
+                scale = 1 / peak
+                for frame in range(frame_start, frame_end):
+                    samples[frame] *= scale
+
+        scale = 32767
+
+    return [
+        max(-32768, min(32767, round(sample * scale)))
+        for sample in samples
+    ]
 
 
 def write_wav(output_path: Path, samples: list[int], sample_rate: int) -> None:
@@ -175,11 +192,12 @@ def main() -> int:
     )
     parser.add_argument(
         "--amplitude-mode",
-        choices=("global", "row"),
+        choices=("global", "column"),
         default="global",
         help=(
             "global: normalize the combined signal (default); "
-            "row: normalize each active row before combining"
+            "column: sum all active pixels at each x-coordinate and normalize "
+            "that column's audio to full volume"
         ),
     )
     arguments = parser.parse_args()
