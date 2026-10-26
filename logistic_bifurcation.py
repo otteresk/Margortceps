@@ -22,6 +22,21 @@ TRANSIENT_ITERATIONS = 1000
 PLOTTED_ITERATIONS = 300
 
 
+def _format_tick_values(values: list[float]) -> list[str]:
+    """Keep neighboring axis labels distinct for narrow parameter ranges."""
+    spacings = [
+        abs(right - left)
+        for left, right in zip(values, values[1:])
+        if right != left
+    ]
+    if not spacings:
+        return [f"{value:.3g}" for value in values]
+
+    magnitude = max(1.0, *(abs(value) for value in values))
+    precision = min(15, max(3, math.ceil(math.log10(magnitude / min(spacings))) + 1))
+    return [f"{value:.{precision}g}" for value in values]
+
+
 def generate_diagram(
     r_start: float,
     r_end: float,
@@ -63,7 +78,7 @@ def generate_diagram(
         r_start + (r_end - r_start) * position ** (1.0 / stretching_factor)
         for position in tick_positions
     ]
-    axis.set_xticks(tick_positions, [f"{value:.3g}" for value in tick_values])
+    axis.set_xticks(tick_positions, _format_tick_values(tick_values))
     axis.set_xlim(0.0, 1.0)
     axis.set_ylim(0.0, 1.0)
     axis.set_xlabel("Growth factor r")
