@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Convert a PNG spectrogram image into a mono WAV file; install Pillow to run."""
+"""Convert a PNG image into a mono WAV file; install Pillow to run."""
 
 from __future__ import annotations
 
