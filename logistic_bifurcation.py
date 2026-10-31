@@ -43,6 +43,8 @@ def generate_diagram(
     stretching_factor: float,
     output_path: Path,
     show_x_axis: bool = True,
+    width: int = 800,
+    height: int = 600,
 ) -> None:
     """Generate and save the logistic-map bifurcation diagram."""
     if not math.isfinite(r_start) or not math.isfinite(r_end):
@@ -51,6 +53,8 @@ def generate_diagram(
         raise ValueError("r-start and r-end must satisfy 0 <= r-start < r-end <= 4")
     if not math.isfinite(stretching_factor) or stretching_factor <= 0:
         raise ValueError("stretching factor must be a finite positive number")
+    if width <= 0 or height <= 0:
+        raise ValueError("width and height must be positive integers")
 
     x_positions = np.linspace(0.0, 1.0, R_SAMPLES)
     r_values = r_start + (r_end - r_start) * np.power(
@@ -66,7 +70,7 @@ def generate_diagram(
         states = r_values * states * (1.0 - states)
         plotted_states[iteration] = states
 
-    figure, axis = plt.subplots(figsize=(12, 7))
+    figure, axis = plt.subplots(figsize=(width / 100, height / 100), dpi=100)
     axis.plot(
         np.tile(x_positions, PLOTTED_ITERATIONS),
         plotted_states.ravel(),
@@ -88,7 +92,7 @@ def generate_diagram(
         axis.spines[spine].set_visible(False)
     axis.spines["bottom"].set_visible(show_x_axis)
     figure.tight_layout()
-    figure.savefig(output_path, dpi=180)
+    figure.savefig(output_path, dpi=100)
     plt.close(figure)
 
 
@@ -123,6 +127,18 @@ def main() -> int:
         default="show",
         help="show or hide the x-axis (default: show)",
     )
+    parser.add_argument(
+        "--width",
+        type=int,
+        default=800,
+        help="output image width in pixels (default: 800)",
+    )
+    parser.add_argument(
+        "--height",
+        type=int,
+        default=600,
+        help="output image height in pixels (default: 600)",
+    )
     arguments = parser.parse_args()
 
     try:
@@ -132,6 +148,8 @@ def main() -> int:
             arguments.stretching_factor,
             arguments.output,
             arguments.x_axis == "show",
+            arguments.width,
+            arguments.height,
         )
     except (OSError, ValueError) as error:
         parser.error(str(error))
