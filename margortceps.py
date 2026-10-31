@@ -148,7 +148,7 @@ def image_to_samples(
                 filled = bar_width * (y + 1) // height
                 bar = "#" * filled + "-" * (bar_width - filled)
                 print(
-                    f"\rSynthesizing: [{bar}] {progress:3d}% ({y + 1}/{height} rows)",
+                    f"\rSynthesizing: [{bar}] {progress:3d}% ({y + 1}/{height} lines)",
                     end="\n" if y + 1 == height else "",
                     file=sys.stderr,
                     flush=True,
