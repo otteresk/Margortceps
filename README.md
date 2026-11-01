@@ -71,3 +71,27 @@ python3 logistic_bifurcation.py 1.5 4 3 --width 1200 --height 800
 ```
 
 Use `--x-axis hide` to omit the x-axis.
+
+## Example: logistic-map orbit
+
+[`logistic_iteration.py`](./logistic_iteration.py) plots the evolution of the
+logistic map for one fixed growth factor. The image width determines the number
+of x-axis units, and `--iterations-per-step` determines how many iterations
+each unit represents. By default, an 800-pixel-wide image runs 80,000 iterations
+from `x0 = 0.5`, plotting every iteration:
+
+```sh
+python3 logistic_iteration.py 3.7 --output media/logistic_iteration.png
+```
+
+Set the x-axis scale and initial value with `--iterations-per-step` and
+`--initial-value`. For example, to run 500 iterations in a 500-pixel-wide image:
+
+```sh
+python3 logistic_iteration.py 3.7 --width 500 --iterations-per-step 1
+```
+
+The growth factor `r` must be between 0 and 4, and the initial value must be
+between 0 and 1. The output path defaults to `logistic_iteration.png`; use
+`--width` and `--height` to set the image resolution. The y-axis is hidden;
+use `--x-axis hide` to hide the x-axis as well.
