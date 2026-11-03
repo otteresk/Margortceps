@@ -70,7 +70,7 @@ Choose another resolution with `--width` and `--height`, for example:
 python3 logistic_bifurcation.py 1.5 4 3 --width 1200 --height 800
 ```
 
-Use `--x-axis hide` to omit the x-axis.
+The x-axis is hidden by default; use `--x-axis show` to display it.
 
 ## Example: logistic-map orbit
 
@@ -93,5 +93,5 @@ python3 logistic_iteration.py 3.7 --width 500 --iterations-per-step 1
 
 The growth factor `r` must be between 0 and 4, and the initial value must be
 between 0 and 1. The output path defaults to `logistic_iteration.png`; use
-`--width` and `--height` to set the image resolution. The y-axis is hidden;
-use `--x-axis hide` to hide the x-axis as well.
+`--width` and `--height` to set the image resolution. Both axes are hidden by
+default; use `--x-axis show` to display the x-axis.

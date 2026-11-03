@@ -84,8 +84,8 @@ def main() -> int:
     parser.add_argument(
         "--x-axis",
         choices=("show", "hide"),
-        default="show",
-        help="show or hide the x-axis (default: show)",
+        default="hide",
+        help="show or hide the x-axis (default: hide)",
     )
     parser.add_argument(
         "--width",
