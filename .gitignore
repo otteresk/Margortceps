@@ -2,5 +2,6 @@
 *.jpg
 *.mp3
 *.wav
+!melody.png
 requirements.txt
-media/
+media/*

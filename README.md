@@ -111,3 +111,10 @@ python3 logistic_iteration.py 3.828426 --iterations-per-step 20
 python3 margortceps.py logistic_iteration.png logistic_iteration.wav 200 1400 30
 ```
 
+## Example 3: Melody
+
+Convert [`melody.png`](./melody.png) from this repository into a WAV file. Do you know the song?
+
+```sh
+python3 margortceps.py melody.png output.wav 261.63 440 16.2338
+```
