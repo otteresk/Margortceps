@@ -41,7 +41,17 @@ from the bifurcation program, reduce its `--width`. A narrower image has less
 horizontal detail.
 
 
-## Example 1: Logistic map bifurcation diagrams
+
+## Example 1: Melody
+
+Convert [`melody.png`](./melody.png) from this repository into a WAV file. Do you know the song?
+
+```sh
+python3 margortceps.py melody.png melody.wav 261.63 440 16.2338
+```
+
+
+## Example 2: Logistic map bifurcation diagrams
 
 [`logistic_bifurcation.py`](./logistic_bifurcation.py) is a separate example
 program that generates an image; its output can then be used as input to
@@ -63,13 +73,21 @@ python3 margortceps.py bifurcation.png bifurcation.wav 200 2000 40
 The diagram command takes the starting and ending logistic-map growth factors
 (`r-start` and `r-end`, between 0 and 4) and a positive stretching factor.
 Stretching factor `1` spaces the range linearly; larger values give more
-horizontal space near `r-end`.
+horizontal space near `r-end`. If `r-start` is greater than `r-end`, the growth
+factor decreases from the start value to the end value.
 
 The output path defaults to
 `logistic_bifurcation.png`, and the default image resolution is 800x600 pixels. The x-axis is hidden by default; use `--x-axis show` to display it. Choose another resolution with `--width` and `--height`, for example:
 
 ```sh
 python3 logistic_bifurcation.py 1.5 4 3 --width 1200 --height 800 --x-axis show
+```
+
+The diagram plots 300 iterations per x-axis pixel after an initial transient
+by default. Change that density with `--iterations-per-pixel`:
+
+```sh
+python3 logistic_bifurcation.py 1.5 4 3 --iterations-per-pixel 500
 ```
 
 The bifurcation diagram has many interesting "regions". Try this for a complete different sound:
@@ -79,42 +97,9 @@ python3 logistic_bifurcation.py 3.82842635 3.8284266 0.15 --output bifurcation.p
 python3 margortceps.py bifurcation.png bifurcation.wav 200 1000 60
 ```
 
-
-## Example 2: Logistic map interations
-
-[`logistic_iteration.py`](./logistic_iteration.py) plots the evolution of the
-logistic map for one fixed growth factor. The image width determines the number
-of x-axis units, and `--iterations-per-step` determines how many iterations
-each unit represents. By default, an 800-pixel-wide image runs 80,000 iterations
-from `x0 = 0.5`, plotting every iteration (in the chaos regime):
+This one travels from the period regime into intermittency and then chaos:
 
 ```sh
-python3 logistic_iteration.py 3.7 --output logistic_iteration.png
-```
-
-Set the x-axis scale and initial value with `--iterations-per-step` and
-`--initial-value`. For example, to run 500 iterations in a 500-pixel-wide image (in the periodic regime):
-
-```sh
-python3 logistic_iteration.py 3.55 --width 500 --iterations-per-step 1
-python3 margortceps.py logistic_iteration.png logistic_iteration.wav 200 2000 10
-```
-
-The growth factor `r` must be between 0 and 4, and the initial value must be
-between 0 and 1. The output path defaults to `logistic_iteration.png`; use
-`--width` and `--height` to set the image resolution. Both axes are hidden by
-default; use `--x-axis show` to display the x-axis.
-
-The following growth factor `r` generates periodic cycles with chaos bursts (intermittency):
-```sh
-python3 logistic_iteration.py 3.828426 --iterations-per-step 20
-python3 margortceps.py logistic_iteration.png logistic_iteration.wav 200 1400 30
-```
-
-## Example 3: Melody
-
-Convert [`melody.png`](./melody.png) from this repository into a WAV file. Do you know the song?
-
-```sh
-python3 margortceps.py melody.png output.wav 261.63 440 16.2338
+python3 logistic_bifurcation.py 3.828425 3.82000 0.1 --iterations-per-pixel 20 --width 1500 --output bifurcation.png
+python3 margortceps.py bifurcation.png bifurcation.wav 200 1000 80
 ```

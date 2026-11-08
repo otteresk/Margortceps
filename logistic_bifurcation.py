@@ -17,9 +17,7 @@ import numpy as np
 
 R_MIN = 0.0
 R_MAX = 4.0
-R_SAMPLES = 2400
 TRANSIENT_ITERATIONS = 1000
-PLOTTED_ITERATIONS = 300
 
 
 def _format_tick_values(values: list[float]) -> list[str]:
@@ -45,34 +43,44 @@ def generate_diagram(
     show_x_axis: bool = True,
     width: int = 800,
     height: int = 600,
+    iterations_per_pixel: int = 300,
 ) -> None:
     """Generate and save the logistic-map bifurcation diagram."""
     if not math.isfinite(r_start) or not math.isfinite(r_end):
         raise ValueError("r-start and r-end must be finite numbers")
-    if not R_MIN <= r_start < r_end <= R_MAX:
-        raise ValueError("r-start and r-end must satisfy 0 <= r-start < r-end <= 4")
+    if not (
+        R_MIN <= r_start <= R_MAX
+        and R_MIN <= r_end <= R_MAX
+        and r_start != r_end
+    ):
+        raise ValueError(
+            "r-start and r-end must be different values between 0 and 4"
+        )
     if not math.isfinite(stretching_factor) or stretching_factor <= 0:
         raise ValueError("stretching factor must be a finite positive number")
     if width <= 0 or height <= 0:
         raise ValueError("width and height must be positive integers")
+    if iterations_per_pixel <= 0:
+        raise ValueError("iterations per pixel must be a positive integer")
 
-    x_positions = np.linspace(0.0, 1.0, R_SAMPLES)
+    r_samples = width
+    x_positions = np.linspace(0.0, 1.0, r_samples)
     r_values = r_start + (r_end - r_start) * np.power(
         x_positions, 1.0 / stretching_factor
     )
-    states = np.full(R_SAMPLES, 0.5)
+    states = np.full(r_samples, 0.5)
 
     for _ in range(TRANSIENT_ITERATIONS):
         states = r_values * states * (1.0 - states)
 
-    plotted_states = np.empty((PLOTTED_ITERATIONS, R_SAMPLES))
-    for iteration in range(PLOTTED_ITERATIONS):
+    plotted_states = np.empty((iterations_per_pixel, r_samples))
+    for iteration in range(iterations_per_pixel):
         states = r_values * states * (1.0 - states)
         plotted_states[iteration] = states
 
     figure, axis = plt.subplots(figsize=(width / 100, height / 100), dpi=100)
     axis.plot(
-        np.tile(x_positions, PLOTTED_ITERATIONS),
+        np.tile(x_positions, iterations_per_pixel),
         plotted_states.ravel(),
         ",k",
         rasterized=True,
@@ -107,7 +115,7 @@ def main() -> int:
     parser.add_argument(
         "r_end",
         type=float,
-        help="last growth factor (greater than r-start, up to 4)",
+        help="last growth factor (between 0 and 4, different from r-start)",
     )
     parser.add_argument(
         "stretching_factor",
@@ -139,6 +147,13 @@ def main() -> int:
         default=600,
         help="output image height in pixels (default: 600)",
     )
+    parser.add_argument(
+        "--iterations-per-pixel",
+        dest="iterations_per_pixel",
+        type=int,
+        default=300,
+        help="iterations plotted per x-axis pixel (default: 300)",
+    )
     arguments = parser.parse_args()
 
     try:
@@ -150,6 +165,7 @@ def main() -> int:
             arguments.x_axis == "show",
             arguments.width,
             arguments.height,
+            arguments.iterations_per_pixel,
         )
     except (OSError, ValueError) as error:
         parser.error(str(error))
